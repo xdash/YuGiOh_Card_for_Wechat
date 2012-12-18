@@ -26,13 +26,12 @@ define("DEFAULT_COVER", "/wp-content/uploads/2012/12/search_cover.png");
 define("WELCOME" , "Hello there!");
 
 // 查询来源网页 ourocg.cn（不需要修改）
-define("OUROCG","http://www.ourocg.cn");
+define("OUROCG","http://www.ourocg.cn/m/card-");
 define("SEARCHPAGE","http://www.ourocg.cn/S.aspx?key=");
 
 // ------ BODY ----------
 
 $wechatObj = new wechatCallbackapiTest();
-
 
 
 if( isset($_REQUEST['echostr']) )
@@ -102,7 +101,7 @@ echo trim($xml);
 
  }else
  {
-   if( $keyword == 'Hello2BizUser' )
+   if( $keyword == 'hi' )
  {?>
 <xml>
 <ToUserName><![CDATA[<?=$fromUsername?>]]></ToUserName>
@@ -119,12 +118,12 @@ else{
 <FromUserName><![CDATA[<?=$toUsername?>]]></FromUserName>
 <CreateTime><?=time()?></CreateTime>
 <MsgType><![CDATA[text]]></MsgType>
-<Content><![CDATA[没有找到包含关键字的文章，试试其他关键字？]]></Content>
+<Content><![CDATA[没有搜索到相关卡片，请尝试其他关键词。]]></Content>
 </xml> 
 <?php
  }  }              
                 }else{
-                  echo "请输入关键字，我们将返回对应的文章...";
+                  echo "请输入要查询的游戏王卡片关键词。";
                 }
 
         }else {
@@ -169,28 +168,30 @@ function ws_get_article( $keyword , $limit = 10 ){
 				if($i < 10){ //微信限制一次最多返回10篇文章
 
 					// 用正则表达式填写进需要的过程，获得各种需要内容
-					//-------  EDIT HERE ---------
 
-					$regTitle = '/href="(.+?)"/is';//卡片名称
-			 		//preg_match( $regTitle , $l , $out);
-			 		//$result['title'] = $out[0];
-					$result['title'] = "测试标题A";
 					
-					$regContent = '/href="(.+?)"/is';//卡片效果
-			 		//preg_match( $regContent , $l , $out );
-			 		//$result['content'] = mb_strimwidth($out[0],0,200,'...','UTF-8');
-					$result['content'] = mb_strimwidth("测试说明B",0,200,'...','UTF-8');
-					
-					$regURL = '/href="(.+?)"/is';//URL
-			 		//preg_match( $regURL , $l , $out );
-			 		//$result['url'] = OUROCG.$out[0];
-					$result['url'] = "http://www.ourocg.cn/Cards/View-5598";
+					$out = preg_replace('/<div class.*height=120 alt="/','',$l);	
+					$out = preg_replace('/"\/><\/figure>/','',$out);
+			 		$result['title'] = "【".$out."】";// 卡片名称
 			 		
-					$regPic = '/http*.jpg/';//图片
-			 		//preg_match( $regPic , $l , $out );
-			 		//$result['pic'] = OUROCG.$out[0];
-			 		$result['pic'] = "http://p.ocgsoft.cn/5342.jpg";
+					$out = preg_replace('/<div class.*<\/a><\/h1>/','',$l);
+					$out = preg_replace('/<\/span><\/div>.*<\/figure>/','',$out);	
+			 		$out = trim(strip_tags($out));// 卡片属性
+			 		$result['title'] = $result['title']." - ".$out;
+
+
+					$out = preg_replace('/<div class.*<p class="effect">/','',$l);
+					$out = preg_replace('/<\/p>.*<\/figure>/','',$out);	
+			 		$result['content'] = mb_strimwidth($out,0,200,'...','UTF-8');// 卡片效果		
+
+					$out = preg_replace('/<div class.*h1.*Cards\/View-/','',$l);	
+					$out = preg_replace('/">.*<\/figure>/','',$out);
+			 		$result['url'] = OUROCG.$out.".html";// 卡片地址
 			 		
+					$out = preg_replace('/<div class.*src="/','',$l);	
+					$out = preg_replace('/" height.*<\/figure>/','',$out);
+			 		$result['pic'] = $out;// 卡片图片			 		
+									 		
   		  			$results[] = $result;
   		  			$i++;
 				}
