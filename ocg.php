@@ -2,7 +2,7 @@
 header("content-type:text/html; charset=utf-8");
 
 /**
-   Plugin Name: 游戏王卡片查询器for微信公众平台
+   Plugin Name: 游戏王卡片查询器for微信
    Plugin URI: http://www.fanbing.net
    Description: 在微信中查询游戏王卡片，技术支持来自ourocg.cn
    Version: 1.0
@@ -20,10 +20,10 @@ header("content-type:text/html; charset=utf-8");
 define("TOKEN", "ocgcardfdasfjlsdjou88fa");
 
 // 设置默认图片 
-define("DEFAULT_COVER", "/wp-content/uploads/2012/12/search_cover.png");
+define("DEFAULT_COVER", "");
 
 // 设置欢迎文案
-define("WELCOME" , "Hello there!");
+define("WELCOME" , "It's time to duel!");
 
 // 查询来源网页 ourocg.cn（不需要修改）
 define("OUROCG","http://www.ourocg.cn/m/card-");
@@ -154,16 +154,26 @@ else{
 
 
 
-function ws_get_article( $keyword , $limit = 10 ){
+function ws_get_article( $keyword ){
 		
 		$i = 0;
 		$sfile = fopen(SEARCHPAGE.$keyword,"r"); //打开查询网页
 		
 		while(!FEOF($sfile)){ //读出网页源码
 		
-			$l = trim(fgets($sfile));//读出一行源码
+			$l = trim(fgets($sfile));//读出一行源码		
+			
+			if ( strpos($l,"main-content carddetails")!==false  ){ //搜到准确结果
+			
+				$getCard = get_accurate_result( $keyword );
+
+				return $getCard;
+
+				exit;		
+			
+			}	
 		
-			if ( strpos($l,"info fn-left")!==false  ){ //搜到一条结果
+			elseif ( strpos($l,"info fn-left")!==false  ){ //搜到模糊结果，返回前10个
 							
 				if($i < 10){ //微信限制一次最多返回10篇文章
 
@@ -194,11 +204,9 @@ function ws_get_article( $keyword , $limit = 10 ){
 									 		
   		  			$results[] = $result;
   		  			$i++;
-				}
-				
+				}				
 				
 			}
-		
 		
 		}
 		
@@ -206,6 +214,115 @@ function ws_get_article( $keyword , $limit = 10 ){
   		else return false;
 
 }
+
+
+
+
+
+function get_accurate_result( $keyword ){
+
+//搜到精确结果时，直接呈现结果
+
+		$i = 0;
+		$sfile = fopen(SEARCHPAGE.$keyword,"r"); //打开查询网页
+		
+		while(!FEOF($sfile)){ //读出网页源码
+		
+			$l = trim(fgets($sfile));//读出一行源码
+					
+			if ( strpos($l,"<li>中文名：")!==false  ){
+			
+					$out = preg_replace('/<li>中文名：/','',$l);	
+					$out = preg_replace('/<\/li>/','',$out);
+			 		$result['title'] = "【".$out."】";// 卡片名称
+			}
+			
+			elseif ( strpos($l,"<li>卡片种类：")!==false  ){
+
+					$out = preg_replace('/<li>卡片种类：/','',$l);	
+					$out = preg_replace('/<\/li>/','',$out);
+			 		$cardCate = $out;// 卡片种类
+			}		
+			
+			elseif ( strpos($l,"<li>星级：")!==false  ){
+					
+					$out = preg_replace('/<li>星级：/','',$l);	
+					$out = preg_replace('/<\/li>/','',$out);
+			 		$cardLevel = " ".$out."星 ";// 卡片星级			
+			} 	
+				
+			elseif ( strpos($l,"<li>阶级：")!==false  ){
+
+					$out = preg_replace('/<li>阶级：/','',$l);	
+					$out = preg_replace('/<\/li>/','',$out);
+			 		$cardXyz = " ".$out."阶 ";// 卡片阶级
+			} 		
+			
+			elseif ( strpos($l,"<li>攻击：")!==false  ){
+
+					$out = preg_replace('/<li>攻击：/','',$l);	
+					$out = preg_replace('/<\/li>/','',$out);
+			 		$cardATK = "/ ATK：".$out." ";// ATK
+			} 		
+			
+			elseif ( strpos($l,"<li>防御：")!==false  ){
+
+					$out = preg_replace('/<li>防御：/','',$l);	
+					$out = preg_replace('/<\/li>/','',$out);
+			 		$cardDEF = "/ DEF：".$out." ";// DEF
+			} 		
+			
+			elseif ( strpos($l,"<li>种族：")!==false  ){
+
+					$out = preg_replace('/<li>种族：/','',$l);	
+					$out = preg_replace('/<\/li>/','',$out);
+			 		$cardRace = "/ 种族：".$out." ";// 种族
+			} 		
+			
+			elseif ( strpos($l,"<li>属性：")!==false  ){
+
+					$out = preg_replace('/<li>属性：/','',$l);	
+					$out = preg_replace('/<\/li>/','',$out);
+			 		$cardNature = "/ 属性：".$out;// 属性
+			} 		
+			
+			elseif ( strpos($l,"<li>效果：")!==false  ){
+
+					$out = preg_replace('/<li>效果：/','',$l);	
+					$out = preg_replace('/<\/li>/','',$out);
+			 		$result['content'] = mb_strimwidth($out,0,200,'...','UTF-8');// 卡片效果
+			}
+			
+			elseif ( strpos($l,'width="160"')!==false  ){
+
+					$out = preg_replace('/.*src="/','',$l);	
+					$out = preg_replace('/".*width=.*<\/li>/','',$out);
+					
+					echo $out;
+					
+			 		$result['pic'] = $out;// 卡片图片
+			}
+			
+			elseif ( strpos($l,'link rel="canonical')!==false  ){
+			
+					$out = preg_replace('/.*<link rel="canonical" href=".*View-/','',$l);	
+					$out = preg_replace('/">/','',$out);
+			 		$result['url'] = OUROCG.$out.".html";// 卡片地址
+			}
+		
+		}
+
+
+					$result['title'] = $result['title']." - ".$cardCate.$cardLevel.$cardXyz.$cardATK.$cardDEF.$cardRace.$cardNature;
+			
+				 		
+  		  			$results[] = $result;
+
+					if( count( $results ) > 0 ) return $results ; 
+  					else return false;
+}
+
+
 
 
 
