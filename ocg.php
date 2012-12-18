@@ -56,81 +56,113 @@ class wechatCallbackapiTest
         }
     }
 
-    public function responseMsg()
-    {
+
+public function responseMsg()
+{
     //get post data, May be due to the different environments
     $postStr = $GLOBALS["HTTP_RAW_POST_DATA"];
 
         //extract post data
-    if (!empty($postStr)){
+    if (!empty($postStr)){//发送有效信息
                 
                 $postObj = simplexml_load_string($postStr, 'SimpleXMLElement', LIBXML_NOCDATA);
                 $fromUsername = $postObj->FromUserName;
                 $toUsername = $postObj->ToUserName;
                 $keyword = trim($postObj->Content);
                 $time = time();
-                       
-        if(!empty( $keyword ))
-                {
-                  //file_put_contents( 'keyword.txt' , $keyword );
-                  
-                  if($articles = ws_get_article( $keyword  ))
-{
-                   ob_start(); 
-                  ?><xml>
-<ToUserName><![CDATA[<?=$fromUsername?>]]></ToUserName>
-<FromUserName><![CDATA[<?=$toUsername?>]]></FromUserName>
-<CreateTime><?=$time?></CreateTime>
-<MsgType><![CDATA[news]]></MsgType>
-<Content><![CDATA[搜索结果]]></Content>
-<ArticleCount><?=count($articles)?></ArticleCount>
-<Articles><?php foreach( $articles as $item ): ?>
-<item> 
-  <Title><![CDATA[<?=$item['title']?>]]></Title>
-  <Description><![CDATA[<?=$item['content']?>]]></Description>
-  <PicUrl><![CDATA[<?=$item['pic']?>]]></PicUrl>
-  <Url><![CDATA[<?=$item['url']?>]]></Url>
-</item>
-<?php endforeach; ?></Articles>
-<FuncFlag>0</FuncFlag>
-</xml><?php
-$xml = ob_get_contents();
-//file_put_contents('xml.txt', $xml);
-header('Content-Type: text/xml');
-echo trim($xml); 
+                
+               
+        if(!empty( $keyword )){//开始解析关键词
 
- }else
- {
-   if( $keyword == 'hi' )
- {?>
-<xml>
-<ToUserName><![CDATA[<?=$fromUsername?>]]></ToUserName>
-<FromUserName><![CDATA[<?=$toUsername?>]]></FromUserName>
-<CreateTime><?=time()?></CreateTime>
-<MsgType><![CDATA[text]]></MsgType>
-<Content><![CDATA[<?=WELCOME?>]]></Content>
-</xml> 
-<?php }
-else{
-?>
-<xml>
-<ToUserName><![CDATA[<?=$fromUsername?>]]></ToUserName>
-<FromUserName><![CDATA[<?=$toUsername?>]]></FromUserName>
-<CreateTime><?=time()?></CreateTime>
-<MsgType><![CDATA[text]]></MsgType>
-<Content><![CDATA[没有搜索到相关卡片，请尝试其他关键词。]]></Content>
-</xml> 
-<?php
- }  }              
-                }else{
-                  echo "请输入要查询的游戏王卡片关键词。";
-                }
+				if( $keyword == 'hi' ){
+						?>
+						<xml>
+						<ToUserName><![CDATA[<?=$fromUsername?>]]></ToUserName>
+						<FromUserName><![CDATA[<?=$toUsername?>]]></FromUserName>
+						<CreateTime><?=time()?></CreateTime>
+						<MsgType><![CDATA[text]]></MsgType>
+						<Content><![CDATA[<?=WELCOME?>]]></Content>
+						</xml> 
+						<?php 
+						exit;}
+						
+				elseif( $keyword == 'roll' ){
+						?>
+						<xml>
+						<ToUserName><![CDATA[<?=$fromUsername?>]]></ToUserName>
+						<FromUserName><![CDATA[<?=$toUsername?>]]></FromUserName>
+						<CreateTime><?=time()?></CreateTime>
+						<MsgType><![CDATA[text]]></MsgType>
+						<Content><![CDATA[<?=rand(1,6)?>]]></Content>
+						</xml> 
+						<?php
+						exit; }
+						
+				elseif( $keyword == 'coin' ){
+						?>
+						<xml>
+						<ToUserName><![CDATA[<?=$fromUsername?>]]></ToUserName>
+						<FromUserName><![CDATA[<?=$toUsername?>]]></FromUserName>
+						<CreateTime><?=time()?></CreateTime>
+						<MsgType><![CDATA[text]]></MsgType>
+						<Content><![CDATA[<?=rand(1,2)==1?"正面":"反面";?>]]></Content>
+						</xml> 
+						<?php
+						exit; }
+						
 
-        }else {
-          echo "";
-          exit;
-        }
+               elseif( $articles = ws_get_article( $keyword )){
+               
+               			ob_start(); 
+                  		?><xml>
+						<ToUserName><![CDATA[<?=$fromUsername?>]]></ToUserName>
+						<FromUserName><![CDATA[<?=$toUsername?>]]></FromUserName>
+						<CreateTime><?=$time?></CreateTime>
+						<MsgType><![CDATA[news]]></MsgType>
+						<Content><![CDATA[搜索结果]]></Content>
+						<ArticleCount><?=count($articles)?></ArticleCount>
+						<Articles><?php foreach( $articles as $item ): ?>
+						<item> 
+  							<Title><![CDATA[<?=$item['title']?>]]></Title>
+  							<Description><![CDATA[<?=$item['content']?>]]></Description>
+  							<PicUrl><![CDATA[<?=$item['pic']?>]]></PicUrl>
+  							<Url><![CDATA[<?=$item['url']?>]]></Url>
+						</item>
+						<?php endforeach; ?></Articles>
+						<FuncFlag>0</FuncFlag>
+					</xml>
+					
+					<?php
+					$xml = ob_get_contents();
+					//file_put_contents('xml.txt', $xml);
+					header('Content-Type: text/xml');
+					echo trim($xml); 
+				}
+				
+			   else{//没搜索到结果
+						
+  						?>
+						<xml>
+						<ToUserName><![CDATA[<?=$fromUsername?>]]></ToUserName>
+						<FromUserName><![CDATA[<?=$toUsername?>]]></FromUserName>
+						<CreateTime><?=time()?></CreateTime>
+						<MsgType><![CDATA[text]]></MsgType>
+						<Content><![CDATA[没有搜索到相关卡片，请尝试其他关键词。]]></Content>
+						</xml>
+					<?php
+				}
+				     
+        }else{//发送空关键词
+                  	echo "请输入要查询的游戏王卡片关键词。";
+        	}
+
+
+	}else {//未发送有效信息
+		echo "";
+		exit;
     }
+    
+}
     
   private function checkSignature()
   {
