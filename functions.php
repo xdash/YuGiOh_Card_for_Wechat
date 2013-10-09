@@ -25,9 +25,9 @@ function request_by_curl($remote_server,$post_string){
 
 
 function get_redirect_mobile($cardID){
-/*** 根据 ourocg.cn 原移动页面中心定向到自己适配的页面 ***//
-/*** 自己适配的页面地址为 redirect_mobile.php?cardid=xxx ***//
-/*** 其中 cardid 就是原本卡片的ID 号 ***//
+/*** 根据 ourocg.cn 原移动页面中心定向到自己适配的页面 ***/
+/*** 自己适配的页面地址为 redirect_mobile.php?cardid=xxx ***/
+/*** 其中 cardid 就是原本卡片的ID 号 ***/
 
 	return $_SERVER['HTTP_HOST'].OUROCG_REDIRCT_MOBILE.$cardID;
 
